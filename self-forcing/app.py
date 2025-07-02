@@ -29,6 +29,8 @@ from PIL import Image
 import spaces
 import torch
 import gradio as gr
+__all__ = ["create_app"]
+
 from omegaconf import OmegaConf
 from tqdm import tqdm
 import imageio
@@ -421,89 +423,88 @@ def video_generation_handler_streaming(prompt, seed=42, fps=15):
     yield None, final_status_html
     print(f"✅ PyAV streaming complete! {total_frames_yielded} frames across {num_blocks} blocks")
 
-# --- Gradio UI Layout ---
-with gr.Blocks(title="Self-Forcing Streaming Demo") as demo:
-    gr.Markdown("# 🚀 Self-Forcing Video Generation")
-    gr.Markdown("Real-time video generation with distilled Wan2-1 1.3B [[Model]](https://huggingface.co/gdhe17/Self-Forcing), [[Project page]](https://self-forcing.github.io), [[Paper]](https://huggingface.co/papers/2506.08009)")
-    
-    with gr.Row():
-        with gr.Column(scale=2):
-            with gr.Group():
-                prompt = gr.Textbox(
-                    label="Prompt", 
-                    placeholder="A stylish woman walks down a Tokyo street...", 
-                    lines=4,
-                    value=""
-                )
-                enhance_button = gr.Button("✨ Enhance Prompt", variant="secondary")
-
-            start_btn = gr.Button("🎬 Start Streaming", variant="primary", size="lg")
-            
-            gr.Markdown("### 🎯 Examples")
-            gr.Examples(
-                examples=[
-                    "A close-up shot of a ceramic teacup slowly pouring water into a glass mug.",
-                    "A playful cat is seen playing an electronic guitar, strumming the strings with its front paws. The cat has distinctive black facial markings and a bushy tail. It sits comfortably on a small stool, its body slightly tilted as it focuses intently on the instrument. The setting is a cozy, dimly lit room with vintage posters on the walls, adding a retro vibe. The cat's expressive eyes convey a sense of joy and concentration. Medium close-up shot, focusing on the cat's face and hands interacting with the guitar.",
-                    "A dynamic over-the-shoulder perspective of a chef meticulously plating a dish in a bustling kitchen. The chef, a middle-aged woman, deftly arranges ingredients on a pristine white plate. Her hands move with precision, each gesture deliberate and practiced. The background shows a crowded kitchen with steaming pots, whirring blenders, and the clatter of utensils. Bright lights highlight the scene, casting shadows across the busy workspace. The camera angle captures the chef's detailed work from behind, emphasizing his skill and dedication.",
-                ],
-                inputs=[prompt],
-            )
-            
-            gr.Markdown("### ⚙️ Settings")
-            with gr.Row():
-                seed = gr.Number(
-                    label="Seed", 
-                    value=-1, 
-                    info="Use -1 for random seed",
-                    precision=0
-                )
-                fps = gr.Slider(
-                    label="Playback FPS", 
-                    minimum=1, 
-                    maximum=30, 
-                    value=args.fps, 
-                    step=1,
-                    visible=False,
-                    info="Frames per second for playback"
-                )
-            
-        with gr.Column(scale=3):
-            gr.Markdown("### 📺 Video Stream")
-
-            streaming_video = gr.Video(
-                label="Live Stream",
-                streaming=True,
-                loop=True,
-                height=400,
-                autoplay=True,
-                show_label=False
-            )
-            
-            status_display = gr.HTML(
-                value=(
-                    "<div style='text-align: center; padding: 20px; color: #666; border: 1px dashed #ddd; border-radius: 8px;'>"
-                    "🎬 Ready to start streaming...<br>"
-                    "<small>Configure your prompt and click 'Start Streaming'</small>"
-                    "</div>"
-                ),
-                label="Generation Status"
-            )
-
-    # Connect the generator to the streaming video
-    start_btn.click(
-        fn=video_generation_handler_streaming,
-        inputs=[prompt, seed, fps],
-        outputs=[streaming_video, status_display]
-    )
-    
-    enhance_button.click(
-        fn=enhance_prompt,
-        inputs=[prompt],
-        outputs=[prompt]
-    )
-
-# --- Launch App ---
 def create_app():
+    # --- Gradio UI Layout ---
+    with gr.Blocks(title="Self-Forcing Streaming Demo") as demo:
+        gr.Markdown("# 🚀 Self-Forcing Video Generation")
+        gr.Markdown("Real-time video generation with distilled Wan2-1 1.3B [[Model]](https://huggingface.co/gdhe17/Self-Forcing), [[Project page]](https://self-forcing.github.io), [[Paper]](https://huggingface.co/papers/2506.08009)")
+        
+        with gr.Row():
+            with gr.Column(scale=2):
+                with gr.Group():
+                    prompt = gr.Textbox(
+                        label="Prompt", 
+                        placeholder="A stylish woman walks down a Tokyo street...", 
+                        lines=4,
+                        value=""
+                    )
+                    enhance_button = gr.Button("✨ Enhance Prompt", variant="secondary")
+    
+                start_btn = gr.Button("🎬 Start Streaming", variant="primary", size="lg")
+                
+                gr.Markdown("### 🎯 Examples")
+                gr.Examples(
+                    examples=[
+                        "A close-up shot of a ceramic teacup slowly pouring water into a glass mug.",
+                        "A playful cat is seen playing an electronic guitar, strumming the strings with its front paws. The cat has distinctive black facial markings and a bushy tail. It sits comfortably on a small stool, its body slightly tilted as it focuses intently on the instrument. The setting is a cozy, dimly lit room with vintage posters on the walls, adding a retro vibe. The cat's expressive eyes convey a sense of joy and concentration. Medium close-up shot, focusing on the cat's face and hands interacting with the guitar.",
+                        "A dynamic over-the-shoulder perspective of a chef meticulously plating a dish in a bustling kitchen. The chef, a middle-aged woman, deftly arranges ingredients on a pristine white plate. Her hands move with precision, each gesture deliberate and practiced. The background shows a crowded kitchen with steaming pots, whirring blenders, and the clatter of utensils. Bright lights highlight the scene, casting shadows across the busy workspace. The camera angle captures the chef's detailed work from behind, emphasizing his skill and dedication.",
+                    ],
+                    inputs=[prompt],
+                )
+                
+                gr.Markdown("### ⚙️ Settings")
+                with gr.Row():
+                    seed = gr.Number(
+                        label="Seed", 
+                        value=-1, 
+                        info="Use -1 for random seed",
+                        precision=0
+                    )
+                    fps = gr.Slider(
+                        label="Playback FPS", 
+                        minimum=1, 
+                        maximum=30, 
+                        value=args.fps, 
+                        step=1,
+                        visible=False,
+                        info="Frames per second for playback"
+                    )
+                
+            with gr.Column(scale=3):
+                gr.Markdown("### 📺 Video Stream")
+    
+                streaming_video = gr.Video(
+                    label="Live Stream",
+                    streaming=True,
+                    loop=True,
+                    height=400,
+                    autoplay=True,
+                    show_label=False
+                )
+                
+                status_display = gr.HTML(
+                    value=(
+                        "<div style='text-align: center; padding: 20px; color: #666; border: 1px dashed #ddd; border-radius: 8px;'>"
+                        "🎬 Ready to start streaming...<br>"
+                        "<small>Configure your prompt and click 'Start Streaming'</small>"
+                        "</div>"
+                    ),
+                    label="Generation Status"
+                )
+    
+        # Connect the generator to the streaming video
+        start_btn.click(
+            fn=video_generation_handler_streaming,
+            inputs=[prompt, seed, fps],
+            outputs=[streaming_video, status_display]
+        )
+        
+        enhance_button.click(
+            fn=enhance_prompt,
+            inputs=[prompt],
+            outputs=[prompt]
+    )
+
     return demo
 
 if __name__ == "__main__":
@@ -517,7 +518,7 @@ if __name__ == "__main__":
     print(f"🎯 Chunk encoding: PyAV (MPEG-TS/H.264)")
     print(f"⚡ GPU acceleration: {gpu}")
 
-    demo.queue().launch(
+    create_app().queue().launch(
         server_name=args.host,
         server_port=args.port,
         share=args.share,

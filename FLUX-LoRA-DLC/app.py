@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional, Union
 import torch
 from PIL import Image
 import gradio as gr
+__all__ = ["create_app"]
+
 
 from diffusers import (
     DiffusionPipeline,
@@ -2346,80 +2348,79 @@ css = '''
 .progress-bar {height: 100%;background-color: #4f46e5;width: calc(var(--current) / var(--total) * 100%);transition: width 0.5s ease-in-out}
 '''
 
-with gr.Blocks(theme=gr.themes.Soft(), css=css, delete_cache=(60, 60)) as app:
-    title = gr.HTML(
-        """<h1>FLUX LoRA DLC🥳</h1>""",
-        elem_id="title",
-    )
-    selected_index = gr.State(None)
-    with gr.Row():
-        with gr.Column(scale=3):
-            prompt = gr.Textbox(label="Prompt", lines=1, placeholder=":/ choose the LoRA and type the prompt ")
-        with gr.Column(scale=1, elem_id="gen_column"):
-            generate_button = gr.Button("Generate", variant="primary", elem_id="gen_btn")
-    with gr.Row():
-        with gr.Column():
-            selected_info = gr.Markdown("")
-            gallery = gr.Gallery(
-                [(item["image"], item["title"]) for item in loras],
-                label="250+ LoRA DLC's",
-                allow_preview=False,
-                columns=3,
-                elem_id="gallery",
-                show_share_button=False
-            )
-            with gr.Group():
-                custom_lora = gr.Textbox(label="Enter Custom LoRA", placeholder="prithivMLmods/Canopus-LoRA-Flux-Anime")
-                gr.Markdown("[Check the list of FLUX LoRA's](https://huggingface.co/models?other=base_model:adapter:black-forest-labs/FLUX.1-dev)", elem_id="lora_list")
-            custom_lora_info = gr.HTML(visible=False)
-            custom_lora_button = gr.Button("Remove custom LoRA", visible=False)
-        with gr.Column():
-            progress_bar = gr.Markdown(elem_id="progress",visible=False)
-            result = gr.Image(label="Generated Image", format="png")
-
-    with gr.Row():
-        with gr.Accordion("Advanced Settings", open=False):
-            with gr.Row():
-                input_image = gr.Image(label="Input image", type="filepath")
-                image_strength = gr.Slider(label="Denoise Strength", info="Lower means more image influence", minimum=0.1, maximum=1.0, step=0.01, value=0.75)
-            with gr.Column():
-                with gr.Row():
-                    cfg_scale = gr.Slider(label="CFG Scale", minimum=1, maximum=20, step=0.5, value=3.5)
-                    steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, value=28)
-                
-                with gr.Row():
-                    width = gr.Slider(label="Width", minimum=256, maximum=1536, step=64, value=1024)
-                    height = gr.Slider(label="Height", minimum=256, maximum=1536, step=64, value=1024)
-                
-                with gr.Row():
-                    randomize_seed = gr.Checkbox(True, label="Randomize seed")
-                    seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=0, randomize=True)
-                    lora_scale = gr.Slider(label="LoRA Scale", minimum=0, maximum=3, step=0.01, value=0.95)
-
-    gallery.select(
-        update_selection,
-        inputs=[width, height],
-        outputs=[prompt, selected_info, selected_index, width, height]
-    )
-    custom_lora.input(
-        add_custom_lora,
-        inputs=[custom_lora],
-        outputs=[custom_lora_info, custom_lora_button, gallery, selected_info, selected_index, prompt]
-    )
-    custom_lora_button.click(
-        remove_custom_lora,
-        outputs=[custom_lora_info, custom_lora_button, gallery, selected_info, selected_index, custom_lora]
-    )
-    gr.on(
-        triggers=[generate_button.click, prompt.submit],
-        fn=run_lora,
-        inputs=[prompt, input_image, image_strength, cfg_scale, steps, selected_index, randomize_seed, seed, width, height, lora_scale],
-        outputs=[result, seed, progress_bar]
-    )
-
 def create_app():
+    with gr.Blocks(theme=gr.themes.Soft(), css=css, delete_cache=(60, 60)) as app:
+        title = gr.HTML(
+            """<h1>FLUX LoRA DLC🥳</h1>""",
+            elem_id="title",
+        )
+        selected_index = gr.State(None)
+        with gr.Row():
+            with gr.Column(scale=3):
+                prompt = gr.Textbox(label="Prompt", lines=1, placeholder=":/ choose the LoRA and type the prompt ")
+            with gr.Column(scale=1, elem_id="gen_column"):
+                generate_button = gr.Button("Generate", variant="primary", elem_id="gen_btn")
+        with gr.Row():
+            with gr.Column():
+                selected_info = gr.Markdown("")
+                gallery = gr.Gallery(
+                    [(item["image"], item["title"]) for item in loras],
+                    label="250+ LoRA DLC's",
+                    allow_preview=False,
+                    columns=3,
+                    elem_id="gallery",
+                    show_share_button=False
+                )
+                with gr.Group():
+                    custom_lora = gr.Textbox(label="Enter Custom LoRA", placeholder="prithivMLmods/Canopus-LoRA-Flux-Anime")
+                    gr.Markdown("[Check the list of FLUX LoRA's](https://huggingface.co/models?other=base_model:adapter:black-forest-labs/FLUX.1-dev)", elem_id="lora_list")
+                custom_lora_info = gr.HTML(visible=False)
+                custom_lora_button = gr.Button("Remove custom LoRA", visible=False)
+            with gr.Column():
+                progress_bar = gr.Markdown(elem_id="progress",visible=False)
+                result = gr.Image(label="Generated Image", format="png")
+    
+        with gr.Row():
+            with gr.Accordion("Advanced Settings", open=False):
+                with gr.Row():
+                    input_image = gr.Image(label="Input image", type="filepath")
+                    image_strength = gr.Slider(label="Denoise Strength", info="Lower means more image influence", minimum=0.1, maximum=1.0, step=0.01, value=0.75)
+                with gr.Column():
+                    with gr.Row():
+                        cfg_scale = gr.Slider(label="CFG Scale", minimum=1, maximum=20, step=0.5, value=3.5)
+                        steps = gr.Slider(label="Steps", minimum=1, maximum=50, step=1, value=28)
+                    
+                    with gr.Row():
+                        width = gr.Slider(label="Width", minimum=256, maximum=1536, step=64, value=1024)
+                        height = gr.Slider(label="Height", minimum=256, maximum=1536, step=64, value=1024)
+                    
+                    with gr.Row():
+                        randomize_seed = gr.Checkbox(True, label="Randomize seed")
+                        seed = gr.Slider(label="Seed", minimum=0, maximum=MAX_SEED, step=1, value=0, randomize=True)
+                        lora_scale = gr.Slider(label="LoRA Scale", minimum=0, maximum=3, step=0.01, value=0.95)
+    
+        gallery.select(
+            update_selection,
+            inputs=[width, height],
+            outputs=[prompt, selected_info, selected_index, width, height]
+        )
+        custom_lora.input(
+            add_custom_lora,
+            inputs=[custom_lora],
+            outputs=[custom_lora_info, custom_lora_button, gallery, selected_info, selected_index, prompt]
+        )
+        custom_lora_button.click(
+            remove_custom_lora,
+            outputs=[custom_lora_info, custom_lora_button, gallery, selected_info, selected_index, custom_lora]
+        )
+        gr.on(
+            triggers=[generate_button.click, prompt.submit],
+            fn=run_lora,
+            inputs=[prompt, input_image, image_strength, cfg_scale, steps, selected_index, randomize_seed, seed, width, height, lora_scale],
+            outputs=[result, seed, progress_bar]
+    )
     return app
 
+
 if __name__ == "__main__":
-    app.queue()
-    app.launch(mcp_server=True, ssr_mode=False, show_error=True)
+    create_app().queue().launch(mcp_server=True, ssr_mode=False, show_error=True)
