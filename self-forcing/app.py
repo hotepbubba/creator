@@ -2,20 +2,23 @@ import subprocess
 subprocess.run('pip install flash-attn --no-build-isolation', env={'FLASH_ATTENTION_SKIP_CUDA_BUILD': "TRUE"}, shell=True)
 
 from huggingface_hub import snapshot_download, hf_hub_download
+from utils.cache import get_cache_dir
 
 snapshot_download(
     repo_id="Wan-AI/Wan2.1-T2V-1.3B",
     local_dir="wan_models/Wan2.1-T2V-1.3B",
     local_dir_use_symlinks=False,
     resume_download=True,
-    repo_type="model" 
+    repo_type="model",
+    cache_dir=get_cache_dir(),
 )
 
 hf_hub_download(
     repo_id="gdhe17/Self-Forcing",
     filename="checkpoints/self_forcing_dmd.pt",
-    local_dir=".",              
-    local_dir_use_symlinks=False 
+    local_dir=".",
+    local_dir_use_symlinks=False,
+    cache_dir=get_cache_dir()
 )
 
 import os
@@ -46,15 +49,19 @@ import numpy as np
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-model_checkpoint = "Qwen/Qwen3-8B" 
+model_checkpoint = "Qwen/Qwen3-8B"
 
-tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
+tokenizer = AutoTokenizer.from_pretrained(
+    model_checkpoint,
+    cache_dir=get_cache_dir(),
+)
 
 model = AutoModelForCausalLM.from_pretrained(
     model_checkpoint,
-    torch_dtype=torch.bfloat16, 
+    torch_dtype=torch.bfloat16,
     attn_implementation="flash_attention_2",
-    device_map="auto"
+    device_map="auto",
+    cache_dir=get_cache_dir(),
 )
 enhancer = pipeline(
     'text-generation',

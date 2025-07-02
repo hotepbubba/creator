@@ -28,6 +28,7 @@ from huggingface_hub import (
     snapshot_download)
 
 from diffusers.utils import load_image
+from utils.cache import get_cache_dir
 
 
 # Authenticate with Hugging Face
@@ -2099,16 +2100,32 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 base_model = "black-forest-labs/FLUX.1-dev"
 
 #TAEF1 is very tiny autoencoder which uses the same "latent API" as FLUX.1's VAE. FLUX.1 is useful for real-time previewing of the FLUX.1 generation process.#
-taef1 = AutoencoderTiny.from_pretrained("madebyollin/taef1", torch_dtype=dtype).to(device)
-good_vae = AutoencoderKL.from_pretrained(base_model, subfolder="vae", torch_dtype=dtype).to(device)
-pipe = DiffusionPipeline.from_pretrained(base_model, torch_dtype=dtype, vae=taef1).to(device)
-pipe_i2i = AutoPipelineForImage2Image.from_pretrained(base_model,
+taef1 = AutoencoderTiny.from_pretrained(
+    "madebyollin/taef1",
+    torch_dtype=dtype,
+    cache_dir=get_cache_dir(),
+).to(device)
+good_vae = AutoencoderKL.from_pretrained(
+    base_model,
+    subfolder="vae",
+    torch_dtype=dtype,
+    cache_dir=get_cache_dir(),
+).to(device)
+pipe = DiffusionPipeline.from_pretrained(
+    base_model,
+    torch_dtype=dtype,
+    vae=taef1,
+    cache_dir=get_cache_dir(),
+).to(device)
+pipe_i2i = AutoPipelineForImage2Image.from_pretrained(
+    base_model,
                                                       vae=good_vae,
                                                       transformer=pipe.transformer,
                                                       text_encoder=pipe.text_encoder,
                                                       tokenizer=pipe.tokenizer,
                                                       text_encoder_2=pipe.text_encoder_2,
                                                       tokenizer_2=pipe.tokenizer_2,
+                                                      cache_dir=get_cache_dir(),
                                                       torch_dtype=dtype
                                                      )
 

@@ -6,6 +6,7 @@ from diffusers import FluxPipeline, AutoencoderKL
 from live_preview_helpers import flux_pipe_call_that_returns_an_iterable_of_images
 from pydantic import BaseModel
 from utils.ollama_client import generate
+from utils.cache import get_cache_dir
 
 __all__ = ["create_app"]
 
@@ -22,8 +23,17 @@ class CharacterDescription(BaseModel):
     current_situation: str
     spoken_lines: list[str]
 
-pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-dev", torch_dtype=torch.bfloat16).to(device)
-good_vae = AutoencoderKL.from_pretrained("black-forest-labs/FLUX.1-dev", subfolder="vae", torch_dtype=torch.bfloat16).to(device)
+pipe = FluxPipeline.from_pretrained(
+    "black-forest-labs/FLUX.1-dev",
+    torch_dtype=torch.bfloat16,
+    cache_dir=get_cache_dir(),
+).to(device)
+good_vae = AutoencoderKL.from_pretrained(
+    "black-forest-labs/FLUX.1-dev",
+    subfolder="vae",
+    torch_dtype=torch.bfloat16,
+    cache_dir=get_cache_dir(),
+).to(device)
 # pipe.enable_sequential_cpu_offload()
 # pipe.vae.enable_slicing()
 # pipe.vae.enable_tiling()
