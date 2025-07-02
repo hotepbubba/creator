@@ -503,20 +503,23 @@ with gr.Blocks(title="Self-Forcing Streaming Demo") as demo:
     )
 
 # --- Launch App ---
+def create_app():
+    return demo
+
 if __name__ == "__main__":
     if os.path.exists("gradio_tmp"):
         import shutil
         shutil.rmtree("gradio_tmp")
     os.makedirs("gradio_tmp", exist_ok=True)
-    
+
     print("🚀 Starting Self-Forcing Streaming Demo")
     print(f"📁 Temporary files will be stored in: gradio_tmp/")
     print(f"🎯 Chunk encoding: PyAV (MPEG-TS/H.264)")
     print(f"⚡ GPU acceleration: {gpu}")
-    
+
     demo.queue().launch(
-        server_name=args.host, 
-        server_port=args.port, 
+        server_name=args.host,
+        server_port=args.port,
         share=args.share,
         show_error=True,
         max_threads=40,

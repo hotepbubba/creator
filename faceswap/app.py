@@ -888,8 +888,12 @@ with gr.Blocks(css=css) as interface:
         lambda: open_directory(path=OUTPUT_FILE), inputs=None, outputs=None
     )
 
+def create_app():
+    return interface
+
 if __name__ == "__main__":
     if USE_COLAB:
         print("Running in colab mode")
 
     interface.queue(concurrency_count=2, max_size=20).launch(share=USE_COLAB)
+

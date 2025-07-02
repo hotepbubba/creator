@@ -2417,5 +2417,9 @@ with gr.Blocks(theme=gr.themes.Soft(), css=css, delete_cache=(60, 60)) as app:
         outputs=[result, seed, progress_bar]
     )
 
-app.queue()
-app.launch(mcp_server=True, ssr_mode=False, show_error=True)
+def create_app():
+    return app
+
+if __name__ == "__main__":
+    app.queue()
+    app.launch(mcp_server=True, ssr_mode=False, show_error=True)

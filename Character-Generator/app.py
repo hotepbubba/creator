@@ -122,4 +122,8 @@ with gr.Blocks(title="Character Generator") as app:
         get_random_persona_description, outputs=[persona_description]
     )
 
-app.queue().launch(share=False)
+def create_app():
+    return app
+
+if __name__ == "__main__":
+    app.queue().launch(share=False)
