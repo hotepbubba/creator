@@ -7,4 +7,3 @@ diffusers
 gradio_client
 datasets
 numpy
-google-genai

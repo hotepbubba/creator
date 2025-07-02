@@ -5,15 +5,12 @@ import torch
 from diffusers import FluxPipeline, AutoencoderKL
 from live_preview_helpers import flux_pipe_call_that_returns_an_iterable_of_images
 import spaces
-from google import genai
 from pydantic import BaseModel
+from utils.ollama_client import generate
 
 __all__ = ["create_app"]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-# Initialize Google Gemini API client
-llm_client = genai.Client()
 class CharacterDescription(BaseModel):
     name: str
     background: str
@@ -46,10 +43,7 @@ In a world with this description:
 world_description_prompt = "Generate a unique and random world description (Don't Write anything else except the world description)."
 
 def get_random_world_description():
-    response = llm_client.models.generate_content(
-        model="gemini-2.5-flash", contents=world_description_prompt
-    )
-    result = response.text
+    result = generate(world_description_prompt)
     if "</think>" in result:
         result = result[result.index("</think>")+len("</think>"):].strip()
     return result
@@ -76,10 +70,8 @@ def generate_character(world_description, persona_description, progress=gr.Progr
         persona_description=persona_description, 
         world_description=world_description
     )
-    response = llm_client.models.generate_content(
-        model="gemini-2.5-flash", contents=prompt_content, config={"response_mime_type": "application/json", "response_schema": CharacterDescription}
-    )
-    return response.parsed
+    result = generate(prompt_content)
+    return json.loads(result)
 
 app_description = """
 - This app generates a character in JSON format based on a persona description and a world description.
