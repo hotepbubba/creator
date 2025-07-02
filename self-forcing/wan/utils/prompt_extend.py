@@ -12,6 +12,7 @@ from typing import Optional, Union
 import dashscope
 import torch
 from PIL import Image
+from utils.cache import get_cache_dir
 
 try:
     from flash_attn import flash_attn_varlen_func
@@ -344,14 +345,18 @@ class QwenPromptExpander(PromptExpander):
                 self.model_name,
                 min_pixels=min_pixels,
                 max_pixels=max_pixels,
-                use_fast=True)
+                use_fast=True,
+                cache_dir=get_cache_dir(),
+            )
             self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
                 self.model_name,
                 torch_dtype=torch.bfloat16 if FLASH_VER == 2 else
                 torch.float16 if "AWQ" in self.model_name else "auto",
                 attn_implementation="flash_attention_2"
                 if FLASH_VER == 2 else None,
-                device_map="cpu")
+                device_map="cpu",
+                cache_dir=get_cache_dir(),
+            )
         else:
             from transformers import AutoModelForCausalLM, AutoTokenizer
             self.model = AutoModelForCausalLM.from_pretrained(
@@ -360,8 +365,13 @@ class QwenPromptExpander(PromptExpander):
                 if "AWQ" in self.model_name else "auto",
                 attn_implementation="flash_attention_2"
                 if FLASH_VER == 2 else None,
-                device_map="cpu")
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+                device_map="cpu",
+                cache_dir=get_cache_dir(),
+            )
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name,
+                cache_dir=get_cache_dir(),
+            )
 
     def extend(self, prompt, system_prompt, seed=-1, *args, **kwargs):
         self.model = self.model.to(self.device)

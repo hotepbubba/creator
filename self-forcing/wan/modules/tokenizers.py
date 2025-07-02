@@ -5,6 +5,7 @@ import string
 import ftfy
 import regex as re
 from transformers import AutoTokenizer
+from utils.cache import get_cache_dir
 
 __all__ = ['HuggingfaceTokenizer']
 
@@ -43,7 +44,11 @@ class HuggingfaceTokenizer:
         self.clean = clean
 
         # init tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(name, **kwargs)
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            name,
+            cache_dir=get_cache_dir(),
+            **kwargs,
+        )
         self.vocab_size = self.tokenizer.vocab_size
 
     def __call__(self, sequence, **kwargs):
