@@ -1,13 +1,33 @@
 import os
 import requests
 
+__all__ = [
+    "AVAILABLE_MODELS",
+    "set_model",
+    "get_model",
+    "generate",
+]
+
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
-_current_model = None
+
+# List of models available to all apps using this client
+AVAILABLE_MODELS = [
+    "llama3",
+    "mistral",
+]
+
+# Currently selected model
+_current_model = os.environ.get("OLLAMA_MODEL", AVAILABLE_MODELS[0])
 
 def set_model(name: str):
     """Set the default model name used for generation."""
     global _current_model
     _current_model = name
+
+
+def get_model() -> str:
+    """Return the currently selected model name."""
+    return _current_model
 
 
 def generate(prompt: str, model: str | None = None) -> str:
