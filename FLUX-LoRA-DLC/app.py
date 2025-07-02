@@ -29,7 +29,6 @@ from huggingface_hub import (
 
 from diffusers.utils import load_image
 
-import spaces
 
 # Authenticate with Hugging Face
 # from huggingface_hub import login
@@ -2156,7 +2155,6 @@ def update_selection(evt: gr.SelectData, width, height):
         height,
     )
 
-@spaces.GPU(duration=100)
 def generate_image(prompt_mash, steps, seed, cfg_scale, width, height, lora_scale, progress):
     pipe.to("cuda")
     generator = torch.Generator(device="cuda").manual_seed(seed)
@@ -2193,7 +2191,6 @@ def generate_image_to_image(prompt_mash, image_input_path, image_strength, steps
     ).images[0]
     return final_image 
 
-@spaces.GPU(duration=100)
 def run_lora(prompt, image_input, image_strength, cfg_scale, steps, selected_index, randomize_seed, seed, width, height, lora_scale, progress=gr.Progress(track_tqdm=True)):
     if selected_index is None:
         raise gr.Error("You must select a LoRA before proceeding.🧨")

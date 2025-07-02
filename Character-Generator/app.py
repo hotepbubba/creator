@@ -4,7 +4,6 @@ import json
 import torch
 from diffusers import FluxPipeline, AutoencoderKL
 from live_preview_helpers import flux_pipe_call_that_returns_an_iterable_of_images
-import spaces
 from pydantic import BaseModel
 from utils.ollama_client import generate
 
@@ -51,7 +50,6 @@ def get_random_world_description():
 def get_random_persona_description():
     return ds.shuffle().select([100])[0]["persona"]
 
-@spaces.GPU(duration=75)
 def infer_flux(character_json):
     for image in pipe.flux_pipe_call_that_returns_an_iterable_of_images(
         prompt=character_json["appearance"],
