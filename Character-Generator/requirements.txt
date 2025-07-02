@@ -1,0 +1,10 @@
+spaces
+transformers
+accelerate
+sentencepiece
+torch
+diffusers
+gradio_client
+datasets
+numpy
+google-genai
