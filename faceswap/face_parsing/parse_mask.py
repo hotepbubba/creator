@@ -8,7 +8,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 
-from . model import BiSeNet
+from .model import BiSeNet
 
 class SoftErosion(nn.Module):
     def __init__(self, kernel_size=15, threshold=0.6, iterations=1):

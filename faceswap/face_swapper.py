@@ -10,7 +10,7 @@ from onnx import numpy_helper
 from skimage import transform as trans
 import torchvision.transforms.functional as F
 import torch.nn.functional as F
-from utils import mask_crop, laplacian_blending
+from .utils import mask_crop, laplacian_blending
 
 
 arcface_dst = np.array(
