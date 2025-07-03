@@ -16,6 +16,7 @@ The apps can be launched together from a single dashboard.
    ```bash
    ./setup.sh
    ```
+   This installs all Python requirements and the `flash-attn` package used by Self-Forcing.
 
 You can change the Ollama host by setting the `OLLAMA_HOST` environment variable
 before running the dashboard (defaults to `http://localhost:11434`).
