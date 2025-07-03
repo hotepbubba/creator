@@ -156,8 +156,6 @@ def load_face_parser_model(path="./assets/pretrained_models/79999_iter.pth"):
         FACE_PARSER = init_parsing_model(path, device=device)
 
 
-load_face_analyser_model()
-load_face_swapper_model()
 
 ## ------------------------------ MAIN PROCESS ------------------------------
 
