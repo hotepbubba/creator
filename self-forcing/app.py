@@ -1,4 +1,3 @@
-import subprocess
 import argparse
 from huggingface_hub import snapshot_download, hf_hub_download
 from utils.cache import get_cache_dir
@@ -16,12 +15,7 @@ DEFAULT_ARGS = argparse.Namespace(
 args = DEFAULT_ARGS
 
 def setup_environment():
-    """Install dependencies and download required models."""
-    subprocess.run(
-        "pip install flash-attn --no-build-isolation",
-        env={"FLASH_ATTENTION_SKIP_CUDA_BUILD": "TRUE"},
-        shell=True,
-    )
+    """Download required models."""
 
     snapshot_download(
         repo_id="Wan-AI/Wan2.1-T2V-1.3B",

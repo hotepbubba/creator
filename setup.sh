@@ -14,6 +14,9 @@ for req in Character-Generator/requirements.txt FLUX-LoRA-DLC/requirements.txt s
     fi
 done
 
+# install flash-attn for Self-Forcing (skip CUDA build)
+FLASH_ATTENTION_SKIP_CUDA_BUILD=TRUE pip install flash-attn --no-build-isolation
+
 # optionally download models for self-forcing
 if [[ "$1" == "--with-models" ]]; then
     python - <<'PY'
