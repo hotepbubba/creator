@@ -1,30 +1,48 @@
 import subprocess
-subprocess.run('pip install flash-attn --no-build-isolation', env={'FLASH_ATTENTION_SKIP_CUDA_BUILD': "TRUE"}, shell=True)
-
+import argparse
 from huggingface_hub import snapshot_download, hf_hub_download
 from utils.cache import get_cache_dir
 
-snapshot_download(
-    repo_id="Wan-AI/Wan2.1-T2V-1.3B",
-    local_dir="wan_models/Wan2.1-T2V-1.3B",
-    local_dir_use_symlinks=False,
-    resume_download=True,
-    repo_type="model",
-    cache_dir=get_cache_dir(),
+DEFAULT_ARGS = argparse.Namespace(
+    port=7860,
+    host="0.0.0.0",
+    checkpoint_path="./checkpoints/self_forcing_dmd.pt",
+    config_path="./configs/self_forcing_dmd.yaml",
+    share=False,
+    trt=False,
+    fps=15.0,
 )
 
-hf_hub_download(
-    repo_id="gdhe17/Self-Forcing",
-    filename="checkpoints/self_forcing_dmd.pt",
-    local_dir=".",
-    local_dir_use_symlinks=False,
-    cache_dir=get_cache_dir()
-)
+args = DEFAULT_ARGS
+
+def setup_environment():
+    """Install dependencies and download required models."""
+    subprocess.run(
+        "pip install flash-attn --no-build-isolation",
+        env={"FLASH_ATTENTION_SKIP_CUDA_BUILD": "TRUE"},
+        shell=True,
+    )
+
+    snapshot_download(
+        repo_id="Wan-AI/Wan2.1-T2V-1.3B",
+        local_dir="wan_models/Wan2.1-T2V-1.3B",
+        local_dir_use_symlinks=False,
+        resume_download=True,
+        repo_type="model",
+        cache_dir=get_cache_dir(),
+    )
+
+    hf_hub_download(
+        repo_id="gdhe17/Self-Forcing",
+        filename="checkpoints/self_forcing_dmd.pt",
+        local_dir=".",
+        local_dir_use_symlinks=False,
+        cache_dir=get_cache_dir(),
+    )
 
 import os
 import re
 import random
-import argparse
 import hashlib
 import urllib.request
 import time
@@ -109,44 +127,101 @@ def enhance_prompt(prompt):
     final_answer = answer[0]['generated_text']
     return final_answer.strip()
 
-# --- Argument Parsing ---
-parser = argparse.ArgumentParser(description="Gradio Demo for Self-Forcing with Frame Streaming")
-parser.add_argument('--port', type=int, default=7860, help="Port to run the Gradio app on.")
-parser.add_argument('--host', type=str, default='0.0.0.0', help="Host to bind the Gradio app to.")
-parser.add_argument("--checkpoint_path", type=str, default='./checkpoints/self_forcing_dmd.pt', help="Path to the model checkpoint.")
-parser.add_argument("--config_path", type=str, default='./configs/self_forcing_dmd.yaml', help="Path to the model config.")
-parser.add_argument('--share', action='store_true', help="Create a public Gradio link.")
-parser.add_argument('--trt', action='store_true', help="Use TensorRT optimized VAE decoder.")
-parser.add_argument('--fps', type=float, default=15.0, help="Playback FPS for frame streaming.")
-args = parser.parse_args()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Gradio Demo for Self-Forcing with Frame Streaming"
+    )
+    parser.add_argument(
+        "--port", type=int, default=DEFAULT_ARGS.port, help="Port to run the Gradio app on."
+    )
+    parser.add_argument(
+        "--host", type=str, default=DEFAULT_ARGS.host, help="Host to bind the Gradio app to."
+    )
+    parser.add_argument(
+        "--checkpoint_path",
+        type=str,
+        default=DEFAULT_ARGS.checkpoint_path,
+        help="Path to the model checkpoint.",
+    )
+    parser.add_argument(
+        "--config_path",
+        type=str,
+        default=DEFAULT_ARGS.config_path,
+        help="Path to the model config.",
+    )
+    parser.add_argument(
+        "--share",
+        action="store_true",
+        help="Create a public Gradio link.",
+    )
+    parser.add_argument(
+        "--trt",
+        action="store_true",
+        help="Use TensorRT optimized VAE decoder.",
+    )
+    parser.add_argument(
+        "--fps",
+        type=float,
+        default=DEFAULT_ARGS.fps,
+        help="Playback FPS for frame streaming.",
+    )
+    return parser.parse_args()
 
 gpu = "cuda"
 
-try:
-    config = OmegaConf.load(args.config_path)
-    default_config = OmegaConf.load("configs/default_config.yaml")
-    config = OmegaConf.merge(default_config, config)
-except FileNotFoundError as e:
-    print(f"Error loading config file: {e}\n. Please ensure config files are in the correct path.")
-    exit(1)
+config = None
+text_encoder = None
+transformer = None
+pipeline = None
 
-# Initialize Models
-print("Initializing models...")
-text_encoder = WanTextEncoder()
-transformer = WanDiffusionWrapper(is_causal=True)
+def initialize_models():
+    """Load configs and models if they haven't been initialized."""
+    global config, text_encoder, transformer, pipeline
+    if pipeline is not None:
+        return
 
-try:
-    state_dict = torch.load(args.checkpoint_path, map_location="cpu")
-    transformer.load_state_dict(state_dict.get('generator_ema', state_dict.get('generator')))
-except FileNotFoundError as e:
-    print(f"Error loading checkpoint: {e}\nPlease ensure the checkpoint '{args.checkpoint_path}' exists.")
-    exit(1)
+    try:
+        loaded = OmegaConf.load(args.config_path)
+        default_config = OmegaConf.load("configs/default_config.yaml")
+        config = OmegaConf.merge(default_config, loaded)
+    except FileNotFoundError as e:
+        print(
+            f"Error loading config file: {e}\n. Please ensure config files are in the correct path."
+        )
+        return
 
-text_encoder.eval().to(dtype=torch.float16).requires_grad_(False)
-transformer.eval().to(dtype=torch.float16).requires_grad_(False)
+    print("Initializing models...")
+    text_encoder = WanTextEncoder()
+    transformer = WanDiffusionWrapper(is_causal=True)
 
-text_encoder.to(gpu)
-transformer.to(gpu)
+    try:
+        state_dict = torch.load(args.checkpoint_path, map_location="cpu")
+        transformer.load_state_dict(
+            state_dict.get("generator_ema", state_dict.get("generator"))
+        )
+    except FileNotFoundError as e:
+        print(
+            f"Error loading checkpoint: {e}\nPlease ensure the checkpoint '{args.checkpoint_path}' exists."
+        )
+        return
+
+    text_encoder.eval().to(dtype=torch.float16).requires_grad_(False)
+    transformer.eval().to(dtype=torch.float16).requires_grad_(False)
+
+    text_encoder.to(gpu)
+    transformer.to(gpu)
+
+    initialize_vae_decoder(use_taehv=False, use_trt=args.trt)
+
+    pipeline = CausalInferencePipeline(
+        config,
+        device=gpu,
+        generator=transformer,
+        text_encoder=text_encoder,
+        vae=APP_STATE["current_vae_decoder"],
+    )
+
+    pipeline.to(dtype=torch.float16).to(gpu)
 
 APP_STATE = {
     "torch_compile_applied": False,
@@ -252,15 +327,6 @@ def initialize_vae_decoder(use_taehv=False, use_trt=False):
     APP_STATE["current_vae_decoder"] = vae_decoder
     print(f"✅ VAE decoder initialized: {'TAEHV' if use_taehv else 'Default VAE'}")
 
-# Initialize with default VAE
-initialize_vae_decoder(use_taehv=False, use_trt=args.trt)
-
-pipeline = CausalInferencePipeline(
-    config, device=gpu, generator=transformer, text_encoder=text_encoder, 
-    vae=APP_STATE["current_vae_decoder"]
-)
-
-pipeline.to(dtype=torch.float16).to(gpu)
 
 @torch.no_grad()
 def video_generation_handler_streaming(prompt, seed=42, fps=15):
@@ -427,7 +493,12 @@ def video_generation_handler_streaming(prompt, seed=42, fps=15):
     yield None, final_status_html
     print(f"✅ PyAV streaming complete! {total_frames_yielded} frames across {num_blocks} blocks")
 
-def create_app():
+def create_app(config: argparse.Namespace = None):
+    """Return the Gradio Blocks app."""
+    global args
+    if config is not None:
+        args = config
+    initialize_models()
     # --- Gradio UI Layout ---
     with gr.Blocks(title="Self-Forcing Streaming Demo") as demo:
         gr.Markdown("# 🚀 Self-Forcing Video Generation")
@@ -511,7 +582,12 @@ def create_app():
 
     return demo
 
-if __name__ == "__main__":
+def main() -> None:
+    global args
+    setup_environment()
+    args = parse_args()
+    initialize_models()
+
     if os.path.exists("gradio_tmp"):
         import shutil
         shutil.rmtree("gradio_tmp")
@@ -522,11 +598,15 @@ if __name__ == "__main__":
     print(f"🎯 Chunk encoding: PyAV (MPEG-TS/H.264)")
     print(f"⚡ GPU acceleration: {gpu}")
 
-    create_app().queue().launch(
+    create_app(args).queue().launch(
         server_name=args.host,
         server_port=args.port,
         share=args.share,
         show_error=True,
         max_threads=40,
-        mcp_server=True
+        mcp_server=True,
     )
+
+
+if __name__ == "__main__":
+    main()
