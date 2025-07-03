@@ -26,23 +26,39 @@ from face_parsing import init_parsing_model, get_parsed_mask, mask_regions, mask
 from face_enhancer import get_available_enhancer_names, load_face_enhancer_model, cv2_interpolations
 from utils import trim_video, StreamerThread, ProcessBar, open_directory, split_list_by_lengths, merge_img_sequence_from_ref, create_image_grid
 
-## ------------------------------ USER ARGS ------------------------------
+## ------------------------------ CONFIGURATION ------------------------------
 
-parser = argparse.ArgumentParser(description="Free Face Swapper")
-parser.add_argument("--out_dir", help="Default Output directory", default=os.getcwd())
-parser.add_argument("--batch_size", help="Gpu batch size", default=32)
-parser.add_argument("--cuda", action="store_true", help="Enable cuda", default=False)
-parser.add_argument(
-    "--colab", action="store_true", help="Enable colab mode", default=False
+DEFAULT_ARGS = argparse.Namespace(
+    out_dir=os.getcwd(),
+    batch_size=32,
+    cuda=False,
+    colab=False,
 )
-user_args = parser.parse_args()
+
+args = DEFAULT_ARGS
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Free Face Swapper")
+    parser.add_argument("--out_dir", help="Default Output directory", default=DEFAULT_ARGS.out_dir)
+    parser.add_argument("--batch_size", help="Gpu batch size", default=DEFAULT_ARGS.batch_size)
+    parser.add_argument("--cuda", action="store_true", help="Enable cuda", default=DEFAULT_ARGS.cuda)
+    parser.add_argument("--colab", action="store_true", help="Enable colab mode", default=DEFAULT_ARGS.colab)
+    return parser.parse_args()
+
+def apply_config(config: argparse.Namespace) -> None:
+    global args, USE_COLAB, USE_CUDA, DEF_OUTPUT_PATH, BATCH_SIZE
+    args = config
+    USE_COLAB = args.colab
+    USE_CUDA = args.cuda
+    DEF_OUTPUT_PATH = args.out_dir
+    BATCH_SIZE = int(args.batch_size)
 
 ## ------------------------------ DEFAULTS ------------------------------
 
-USE_COLAB = user_args.colab
-USE_CUDA = user_args.cuda
-DEF_OUTPUT_PATH = user_args.out_dir
-BATCH_SIZE = int(user_args.batch_size)
+USE_COLAB = args.colab
+USE_CUDA = args.cuda
+DEF_OUTPUT_PATH = args.out_dir
+BATCH_SIZE = int(args.batch_size)
 WORKSPACE = None
 OUTPUT_FILE = None
 CURRENT_FRAME = None
@@ -544,7 +560,9 @@ css = """
 footer{display:none !important}
 """
 
-def create_app():
+def create_app(config: argparse.Namespace = None):
+    if config is not None:
+        apply_config(config)
     with gr.Blocks(css=css) as interface:
         gr.Markdown("# 🗿 Free Face Swapper")
         gr.Markdown("### Help us keep this app free with a tip.")
@@ -894,6 +912,12 @@ def create_app():
 
 
 
+def main() -> None:
+    config = parse_args()
+    apply_config(config)
+    create_app(config).queue(concurrency_count=2, max_size=20).launch(share=config.colab)
+
+
 if __name__ == "__main__":
-    create_app().queue(concurrency_count=2, max_size=20).launch(share=USE_COLAB)
+    main()
 
