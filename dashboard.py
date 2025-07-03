@@ -1,11 +1,27 @@
 import gradio as gr
 import importlib.util
 import os
+from typing import Callable
 
 from utils.ollama_client import AVAILABLE_MODELS, set_model, get_model
 
 
-def load_create_app(module_name, file_path):
+def load_create_app(module_name: str, file_path: str) -> Callable[[], gr.Blocks]:
+    """Load a module and return its ``create_app`` function.
+
+    Parameters
+    ----------
+    module_name:
+        Name to assign the module when importing.
+    file_path:
+        Path to the module's Python file.
+
+    Returns
+    -------
+    Callable[[], gr.Blocks]
+        The ``create_app`` function of the loaded module which builds and returns
+        a Gradio ``Blocks`` interface when called.
+    """
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
