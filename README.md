@@ -31,3 +31,7 @@ python dashboard.py
 
 The first launch may take a while because the underlying models are downloaded
 automatically into the local cache directory on demand.
+
+## License
+
+This project is licensed under the Apache-2.0 License. See [LICENSE](LICENSE) for details.
