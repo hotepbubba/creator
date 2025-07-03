@@ -692,15 +692,26 @@ def create_app(config: argparse.Namespace = None):
                         label="Source face", type="filepath", interactive=True
                     )
     
+                    src_specific_sources = []
+                    src_specific_targets = []
+
                     with gr.Box(visible=False) as specific_face:
                         for i in range(NUM_OF_SRC_SPECIFIC):
                             idx = i + 1
-                            code = "\n"
-                            code += f"with gr.Tab(label='({idx})'):"
-                            code += "\n\twith gr.Row():"
-                            code += f"\n\t\tsrc{idx} = gr.Image(interactive=True, type='numpy', label='Source Face {idx}')"
-                            code += f"\n\t\ttrg{idx} = gr.Image(interactive=True, type='numpy', label='Specific Face {idx}')"
-                            exec(code)
+                            with gr.Tab(label=f"({idx})"):
+                                with gr.Row():
+                                    src_img = gr.Image(
+                                        interactive=True,
+                                        type="numpy",
+                                        label=f"Source Face {idx}",
+                                    )
+                                    trg_img = gr.Image(
+                                        interactive=True,
+                                        type="numpy",
+                                        label=f"Specific Face {idx}",
+                                    )
+                            src_specific_sources.append(src_img)
+                            src_specific_targets.append(trg_img)
     
                         distance_slider = gr.Slider(
                             minimum=0,
@@ -843,12 +854,7 @@ def create_app(config: argparse.Namespace = None):
             outputs=[info],
         )
     
-        src_specific_inputs = []
-        gen_variable_txt = ",".join(
-            [f"src{i+1}" for i in range(NUM_OF_SRC_SPECIFIC)]
-            + [f"trg{i+1}" for i in range(NUM_OF_SRC_SPECIFIC)]
-        )
-        exec(f"src_specific_inputs = ({gen_variable_txt})")
+        src_specific_inputs = src_specific_sources + src_specific_targets
         swap_inputs = [
             input_type,
             image_input,
