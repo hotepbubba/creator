@@ -12,9 +12,9 @@ The apps can be launched together from a single dashboard.
 ## Setup
 
 1. Install Python 3.10 or later.
-2. Install the required packages:
+2. Run the setup script to install all dependencies:
    ```bash
-   pip install -r requirements.txt
+   ./setup.sh
    ```
 
 You can change the Ollama host by setting the `OLLAMA_HOST` environment variable
