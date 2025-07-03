@@ -17,6 +17,7 @@ The apps can be launched together from a single dashboard.
    ./setup.sh
    ```
    This installs all Python requirements and the `flash-attn` package used by Self-Forcing.
+   If you install dependencies manually, run `pip install flash-attn --no-build-isolation` as well.
 3. *(Optional)* Download the default models in advance:
    ```bash
    ./setup.sh --with-models

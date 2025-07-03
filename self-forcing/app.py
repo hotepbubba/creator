@@ -14,8 +14,16 @@ DEFAULT_ARGS = argparse.Namespace(
 
 args = DEFAULT_ARGS
 
-def setup_environment():
-    """Download required models."""
+def setup_environment() -> None:
+    """Verify runtime environment and download required models."""
+
+    if not torch.cuda.is_available():
+        print("Warning: CUDA is not available. Generation will be slow.")
+
+    try:
+        import flash_attn  # noqa: F401
+    except Exception:
+        print("Warning: flash-attn is missing. Run ./setup.sh to install it.")
 
     snapshot_download(
         repo_id="Wan-AI/Wan2.1-T2V-1.3B",
