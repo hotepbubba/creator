@@ -2,7 +2,7 @@ import os
 import cv2
 import numpy as np
 from tqdm import tqdm
-from utils import scale_bbox_from_center
+from .utils import scale_bbox_from_center
 
 detect_conditions = [
     "best detection",
