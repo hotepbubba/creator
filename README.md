@@ -17,6 +17,11 @@ The apps can be launched together from a single dashboard.
    ./setup.sh
    ```
    This installs all Python requirements and the `flash-attn` package used by Self-Forcing.
+3. *(Optional)* Download the default models in advance:
+   ```bash
+   ./setup.sh --with-models
+   ```
+   Models are cached under `~/.cache/creator` by default. Set the `MODEL_CACHE` environment variable to specify another directory.
 
 You can change the Ollama host by setting the `OLLAMA_HOST` environment variable
 before running the dashboard (defaults to `http://localhost:11434`).
